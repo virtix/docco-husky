@@ -66,7 +66,6 @@ generate_documentation = (source, context, callback) ->
     highlight source, sections, ->
       generate_source_html source, context, sections
       callback()
-
 # Given a string of source code, parse out each comment and the code that
 # follows it, and create an individual **section** for it.
 # Sections take the form:

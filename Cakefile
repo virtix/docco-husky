@@ -5,6 +5,7 @@ option '-p', '--prefix [DIR]', 'set the installation prefix for `cake install`'
 task 'clean', 'removes generated files and should be run prior to doc task', ->
   exec([
     'rm -rf docs/*'
+    'rm -rf test/docs/*'
   ])
 
 task 'build', 'continually build the docco library with --watch', ->

@@ -62,7 +62,7 @@ h1, h2, h3, h4, h5, h6 {
 #content {
   padding: 10px 25px 1px 50px;
 }
-  #content pre {
+#content pre {
     margin: 1em 0;
     font-size: 12px;
     background-color: #EEE;
@@ -74,14 +74,9 @@ h1, h2, h3, h4, h5, h6 {
     -webkit-border-radius: 3px;
     -moz-border-radius: 3px;
     border-radius: 3px;
-  }
-    #content pre code {
-      padding: 0!important;
-      font-size: 12px!important;
-      background-color: #EEE!important;
-      border: none!important;
-    }
-#jump_to, #jump_page {
+}
+
+  #jump_to, #jump_page {
   background: white;
   -webkit-box-shadow: 0 0 25px #777; -moz-box-shadow: 0 0 25px #777;
   -webkit-border-bottom-left-radius: 5px; -moz-border-radius-bottomleft: 5px;
@@ -214,6 +209,7 @@ table td {
       font-size: 12px; line-height: 18px;
       font-family: Menlo, Monaco, Consolas, "Lucida Console", monospace;
       margin: 0; padding: 0;
+      color: rgb(198,198,202);
     }
 
 
@@ -281,4 +277,5 @@ body .vc { color: #19469D }                     /* Name.Variable.Class */
 body .vg { color: #19469D }                     /* Name.Variable.Global */
 body .vi { color: #19469D }                     /* Name.Variable.Instance */
 body .il { color: #666666 }                     /* Literal.Number.Integer.Long */
+
 
