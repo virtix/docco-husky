@@ -1,4 +1,4 @@
-# > *forked from the origina [Docco](https://github.com/jashkenas/docco) project, updated with abandon*
+# > *forked from the original [Docco](https://github.com/jashkenas/docco) project, updated with abandon*
 #
 # **Docco** is a quick-and-dirty, hundred-line-long, literate-programming-style
 # documentation generator. It produces HTML
@@ -57,6 +57,8 @@
 # Generate the documentation for a source file by reading it in, splitting it
 # up into comment/code sections, highlighting them for the appropriate language,
 # and merging them into an HTML template.
+#
+#
 generate_documentation = (source, context, callback) ->
   fs.readFile source, "utf-8", (error, code) ->
     throw error if error
@@ -81,7 +83,7 @@ parse = (source, code) ->
   sections = []
   language = get_language source
   has_code = docs_text = code_text = ''
-
+  
   in_multi = false
   multi_accum = ""
 
@@ -268,20 +270,10 @@ _        = require 'underscore'
 walk     = require 'walk'
 {spawn, exec} = require 'child_process'
 
-# A list of the languages that Docco supports, mapping the file extension to
-# the name of the Pygments lexer and the symbol that indicates a comment. To
-# add another language to Docco's repertoire, add it here.
-languages =
-  '.coffee':
-    name: 'coffee-script', symbol: '#'
-  '.js':
-    name: 'javascript', symbol: '//', multi_start: "/*", multi_end: "*/"
-  '.rb':
-    name: 'ruby', symbol: '#'
-  '.py':
-    name: 'python', symbol: '#'
-  '.java':
-    name: 'java', symbol: '//', multi_start: "/*", multi_end: "*/"
+# Import the language definitions. Add or update recognized languages there.
+# See [Pygments](http://pygments.org)
+languages = require('./../lib/languages').languages()
+
 
 # Build out the appropriate matchers and delimiters for each language.
 for ext, l of languages
@@ -302,7 +294,7 @@ for ext, l of languages
   # Note: the class is "c" for Python and "c1" for the other languages
   l.divider_html = new RegExp('\\n*<span class="c1?">' + l.symbol + 'DIVIDER<\\/span>\\n*')
 
-  # Since we'll only handle /* */ multilin comments for now, test for them explicitly
+  # Since we'll only handle /* */ multiline comments for now, test for them explicitly
   # Otherwise set the multi matchers to an unmatchable RegEx
   if l.multi_start == "/*"
     l.multi_start_matcher = new RegExp(/^[\s]*\/\*[.]*/)
@@ -314,7 +306,8 @@ for ext, l of languages
     l.multi_end_matcher = new RegExp(/a^/)
 
 
-# Get the current language we're documenting, based on the extension.
+# Get the current language we're documenting, based on the extension. 
+# (To Do: This should allow for multiple extensions. What to do if a conflict is found?)
 get_language = (source) -> languages[path.extname(source)]
 
 # Compute the path of a source file relative to the docs folder
@@ -347,6 +340,7 @@ content_template = jade.compile fs.readFileSync(__dirname + '/../resources/conte
 
 # The CSS styles we'd like to apply to the documentation.
 docco_styles    = fs.readFileSync(__dirname + '/../resources/docco.css').toString()
+
 
 # The start of each Pygments highlight block.
 highlight_start = '<div class="highlight"><pre>'
@@ -398,7 +392,7 @@ parse_args = (callback) ->
 check_config = (context,pkg)->
   defaults = {
     # the primary CSS file to load
-    css: (__dirname + '/../resources/docco.css')
+    css: (__dirname + '/../resources/solarized-dark.css')
 
     # show the timestamp on generated docs
     show_timestamp: true,

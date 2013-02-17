@@ -55,6 +55,12 @@ Assembly
     extension s
     3rd_gen_scale 0.25
     end_of_line_continuation \\$
+Brainfuck
+    filter remove_matches ^\s*#
+    filter remove_inline #.*$
+    extension bf
+    extension brainfuck
+    end_of_line_continuation \\$
 Bourne Again Shell
     filter remove_matches ^\s*#
     filter remove_inline #.*$
@@ -119,6 +125,11 @@ CCS
     filter call_regexp_common C
     extension ccs
     3rd_gen_scale 5.33
+Clojure
+    filter remove_matches ^\s*;
+    filter remove_inline ;.*$
+    extension clj
+    end_of_line_continuation \\$
 CMake
     filter remove_matches ^\s*#
     filter remove_inline #.*$
@@ -404,7 +415,8 @@ Pascal
     extension dpr
     extension p
     extension pas
-    extension pp
+#   http://cloc.sourceforge.net doesn't support multiple extensions. Here we promote pp to Puppet
+#   extension pp
     3rd_gen_scale 0.88
 Patran Command Language
     filter remove_matches ^\s*#
@@ -428,6 +440,14 @@ Perl
     script_exe perl
     script_exe perl5
     3rd_gen_scale 4.00
+Puppet
+    filter remove_matches ^\s*#
+    filter docstring_to_C
+    filter call_regexp_common C
+    filter remove_inline #.*$
+    extension pp
+    3rd_gen_scale 4.20
+    end_of_line_continuation \\$
 Python
     filter remove_matches ^\s*#
     filter docstring_to_C

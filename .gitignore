@@ -2,3 +2,5 @@
 output
 docs
 node_modules
+*.swp
+*.swo
