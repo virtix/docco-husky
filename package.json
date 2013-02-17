@@ -1,5 +1,5 @@
 {
-  "name": "docco-puppet",
+  "name": "docco-husky",
   "description": "Generated static project documentation primarily for node.js projects. A fork of Docco",
   "keywords": [
     "documentation",
@@ -17,10 +17,11 @@
   ],
   "contributors": [
     "Mike Brevoort <mike@brevoort.com>",
-    "Jeremy Ashkenas"
+    "Jeremy Ashkenas",
+    "bill <bill@if.io>"
   ],
   "engines": {
-    "node": ">=0.4.0"
+    "node": ">=0.8.0"
   },
   "bugs": {
     "url": "https://github.com/virtix/docco-husky/issues"
@@ -43,7 +44,7 @@
   },
   "main": "./lib/docco",
   "bin": {
-    "docco-puppet": "./bin/generate"
+    "docco-husky": "./bin/generate"
   },
   "scripts": {
     "install": "scripts/install.sh"
