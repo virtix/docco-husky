@@ -456,6 +456,14 @@ Python
     extension py
     3rd_gen_scale 4.20
     end_of_line_continuation \\$
+R
+    filter remove_matches ^\s*#
+    filter docstring_to_C
+    filter call_regexp_common C
+    filter remove_inline #.*$
+    extension R
+    extension r
+    end_of_line_continuation \\$
 Rexx
     filter call_regexp_common C
     extension rexx

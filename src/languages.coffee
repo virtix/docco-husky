@@ -39,5 +39,11 @@
 
       '.php':
         name: 'php', symbol: '//', multi_start: '/*', multi_end: '*/'
+      
+      '.R':
+        name: 'r', symbol: '#'
+
+      '.r':
+        name: 'r', symbol: '#'
 
 
