@@ -322,7 +322,8 @@ padding:0;
 }
 
 #jump_page {
-height:400px;
+max-height:540px;
+padding-right:20px;
 min-width:200px;
 overflow-y:auto;
 }

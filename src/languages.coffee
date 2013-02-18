@@ -14,6 +14,7 @@
       '.rb':
         name: 'ruby', symbol: '#'
       
+      #Try """ docstrings ...
       '.py':
         name: 'python', symbol: '#'
       
