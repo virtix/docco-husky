@@ -68,6 +68,9 @@ html
                 if code_stats
                   h3 Stats
                   pre.code_stats !{code_stats}
+                  p
+                    p(align="right")
+                        a(href='test/docs/index.html') Other small examples
             td#content.code !{content}  
       if context.config.show_timestamp
         div#generated generated #{new Date()}  
