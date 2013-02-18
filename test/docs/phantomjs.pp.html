@@ -1,0 +1,39 @@
+<!DOCTYPE html><html><head><title>phantomjs.pp</title><meta http-equiv="Content-Type" content="text/html" charset="UTF-8"><link rel="stylesheet" media="all" href="./docco.css"></head><body><div id="container"><div id="background"></div><div id="jump_to">Jump To &hellip;<div id="jump_wrapper"><div id="jump_page"><a href="./index.html" class="source"><span class="file_name">README</span></a><a href="././agents.clj.html" class="source "><span class="base_path">. / </span><span class="file_name">agents.clj</span></a><a href="././arma.R.html" class="source "><span class="base_path">. / </span><span class="file_name">arma.R</span></a><a href="././crypto_null.c.html" class="source "><span class="base_path">. / </span><span class="file_name">crypto_null.c</span></a><a href="././Foo.java.html" class="source "><span class="base_path">. / </span><span class="file_name">Foo.java</span></a><a href="././gen-ide-json.php.html" class="source "><span class="base_path">. / </span><span class="file_name">gen-ide-json.php</span></a><a href="././hello.bf.html" class="source "><span class="base_path">. / </span><span class="file_name">hello.bf</span></a><a href="././phantomjs.pp.html" class="source selected"><span class="base_path">. / </span><span class="file_name">phantomjs.pp</span></a><a href="././test.js.html" class="source "><span class="base_path">. / </span><span class="file_name">test.js</span></a><a href="././views.py.html" class="source "><span class="base_path">. / </span><span class="file_name">views.py</span></a></div></div></div><table cellpadding="0" cellspacing="0"><thead><tr><th class="docs"><h1>phantomjs.pp</h1><div class="filepath">./</div></th><th class="code"></th></tr></thead><tbody><tr id="section-1"><td class="docs"><div class="pilwrap"><a href="#section-1" class="pilcrow">&#182;</a></div>
+</td><td class="code"><div class="highlight"><pre><span class="k">class</span> <span class="n">phantomjs</span> <span class="p">{</span></pre></div></td></tr><tr id="section-2"><td class="docs"><div class="pilwrap"><a href="#section-2" class="pilcrow">&#182;</a></div><p>Module variables, only one that should ever be changed is version.</p>
+</td><td class="code"><div class="highlight"><pre><span class="vg">$version</span> <span class="o">=</span> <span class="s1">&#39;1.5.0&#39;</span>
+<span class="vg">$arch</span> <span class="o">=</span> <span class="s1">&#39;x86_64&#39;</span>
+<span class="vg">$sourcefile</span> <span class="o">=</span> <span class="s2">&quot;phantomjs-${version}-linux-${arch}-dynamic.tar.gz&quot;</span>
+<span class="vg">$phantom_src_path</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/src/phantomjs-${version}/&quot;</span>
+<span class="vg">$phantom_bin_path</span> <span class="o">=</span> <span class="s1">&#39;/opt/phantomjs/&#39;</span></pre></div></td></tr><tr id="section-3"><td class="docs"><div class="pilwrap"><a href="#section-3" class="pilcrow">&#182;</a></div><p>Lets create the directory where phantom source will use</p>
+</td><td class="code"><div class="highlight"><pre><span class="n">file</span> <span class="p">{</span> <span class="s2">&quot;$phantom_src_path&quot;</span> <span class="p">:</span> <span class="k">ensure</span> <span class="o">=&gt;</span> <span class="n">directory</span> <span class="p">}</span></pre></div></td></tr><tr id="section-4"><td class="docs"><div class="pilwrap"><a href="#section-4" class="pilcrow">&#182;</a></div><p>Lets download the source code for phantom</p>
+</td><td class="code"><div class="highlight"><pre><span class="nb">exec</span> <span class="p">{</span> <span class="s2">&quot;download-${sourcefile}&quot;</span><span class="p">:</span>
+  <span class="n">command</span> <span class="o">=&gt;</span> <span class="s2">&quot;/usr/bin/wget http://phantomjs.googlecode.com/files/${sourcefile} -O /tmp/${sourcefile}&quot;</span><span class="p">,</span>
+  <span class="n">cwd</span>     <span class="o">=&gt;</span> <span class="s2">&quot;${phantom_src_path}&quot;</span><span class="p">,</span>
+  <span class="n">creates</span> <span class="o">=&gt;</span> <span class="s2">&quot;${phantom_src_path}${sourcefile}&quot;</span><span class="p">,</span>
+  <span class="nb">require</span> <span class="o">=&gt;</span> <span class="no">File</span><span class="o">[</span><span class="s2">&quot;$phantom_src_path&quot;</span><span class="o">]</span>
+  <span class="p">}</span></pre></div></td></tr><tr id="section-5"><td class="docs"><div class="pilwrap"><a href="#section-5" class="pilcrow">&#182;</a></div><p>Lets extract the source code</p>
+</td><td class="code"><div class="highlight"><pre><span class="nb">exec</span> <span class="p">{</span> <span class="s2">&quot;extract-${sourcefile}&quot;</span><span class="p">:</span>
+  <span class="n">command</span> <span class="o">=&gt;</span> <span class="s2">&quot;/bin/tar -xvfz ${sourcefile} -C /opt/&quot;</span><span class="p">,</span>
+  <span class="n">creates</span> <span class="o">=&gt;</span> <span class="s1">&#39;/opt/phantomjs/&#39;</span><span class="p">,</span>
+  <span class="n">cwd</span>     <span class="o">=&gt;</span> <span class="s2">&quot;${phantom_src_path}&quot;</span><span class="p">,</span>
+  <span class="nb">require</span> <span class="o">=&gt;</span> <span class="no">Exec</span><span class="o">[</span><span class="s2">&quot;download-${sourcefile}&quot;</span><span class="o">]</span><span class="p">,</span>
+  <span class="p">}</span></pre></div></td></tr><tr id="section-6"><td class="docs"><div class="pilwrap"><a href="#section-6" class="pilcrow">&#182;</a></div><p>Make symlink from source to working directory</p>
+</td><td class="code"><div class="highlight"><pre><span class="n">file</span> <span class="p">{</span> <span class="s1">&#39;/usr/local/bin/phantomjs&#39;</span><span class="p">:</span>
+  <span class="k">ensure</span>  <span class="o">=&gt;</span> <span class="n">link</span><span class="p">,</span>
+  <span class="n">target</span>  <span class="o">=&gt;</span> <span class="s2">&quot;${phantom_bin_path}/bin/phantomjs&quot;</span><span class="p">,</span>
+  <span class="nb">require</span> <span class="o">=&gt;</span> <span class="no">Exec</span><span class="o">[</span><span class="s2">&quot;extract-${sourcefile}&quot;</span><span class="o">]</span><span class="p">,</span>
+  <span class="p">}</span></pre></div></td></tr><tr id="section-7"><td class="docs"><div class="pilwrap"><a href="#section-7" class="pilcrow">&#182;</a></div><p>More links</p>
+</td><td class="code"><div class="highlight"><pre><span class="n">file</span> <span class="p">{</span> <span class="s1">&#39;/usr/bin/phantomjs&#39;</span><span class="p">:</span>
+  <span class="k">ensure</span>  <span class="o">=&gt;</span> <span class="n">link</span><span class="p">,</span>
+  <span class="n">target</span>  <span class="o">=&gt;</span> <span class="s2">&quot;${phantom_bin_path}/bin/phantomjs&quot;</span><span class="p">,</span>
+  <span class="nb">require</span> <span class="o">=&gt;</span> <span class="no">Exec</span><span class="o">[</span><span class="s2">&quot;extract-${sourcefile}&quot;</span><span class="o">]</span><span class="p">,</span>
+  <span class="p">}</span></pre></div></td></tr><tr id="section-8"><td class="docs"><div class="pilwrap"><a href="#section-8" class="pilcrow">&#182;</a></div><p>This will be executed IF the version installed is not the same as the $version
+variable at the top of module
+exec { 'phantom-upgrade':
+ command => 'rm -Rf /opt/phantomjs /usr/local/bin/phantomjs',
+ unless  => "test -f /usr/local/bin/phantomjs &amp;&amp; /usr/local/bin/phantomjs --version | grep ${version}",
+ before  => Exec["download-${sourcefile}"]
+ }</p>
+</td><td class="code"><div class="highlight"><pre><span class="p">}</span>
+
+</pre></div></td></tr></tbody></table><div id="generated">generated Sun Feb 17 2013 20:30:03 GMT-0500 (EST)  </div></div></body></html>

@@ -1,0 +1,366 @@
+<!DOCTYPE html><html><head><title>views.py</title><meta http-equiv="Content-Type" content="text/html" charset="UTF-8"><link rel="stylesheet" media="all" href="./docco.css"></head><body><div id="container"><div id="background"></div><div id="jump_to">Jump To &hellip;<div id="jump_wrapper"><div id="jump_page"><a href="./index.html" class="source"><span class="file_name">README</span></a><a href="././agents.clj.html" class="source "><span class="base_path">. / </span><span class="file_name">agents.clj</span></a><a href="././arma.R.html" class="source "><span class="base_path">. / </span><span class="file_name">arma.R</span></a><a href="././crypto_null.c.html" class="source "><span class="base_path">. / </span><span class="file_name">crypto_null.c</span></a><a href="././Foo.java.html" class="source "><span class="base_path">. / </span><span class="file_name">Foo.java</span></a><a href="././gen-ide-json.php.html" class="source "><span class="base_path">. / </span><span class="file_name">gen-ide-json.php</span></a><a href="././hello.bf.html" class="source "><span class="base_path">. / </span><span class="file_name">hello.bf</span></a><a href="././phantomjs.pp.html" class="source "><span class="base_path">. / </span><span class="file_name">phantomjs.pp</span></a><a href="././test.js.html" class="source "><span class="base_path">. / </span><span class="file_name">test.js</span></a><a href="././views.py.html" class="source selected"><span class="base_path">. / </span><span class="file_name">views.py</span></a></div></div></div><table cellpadding="0" cellspacing="0"><thead><tr><th class="docs"><h1>views.py</h1><div class="filepath">./</div></th><th class="code"></th></tr></thead><tbody><tr id="section-1"><td class="docs"><div class="pilwrap"><a href="#section-1" class="pilcrow">&#182;</a></div><p>This is the views.py from <a href="https://github.com/cfpb/transit_subsidy">Transit Subsidy</a></p>
+</td><td class="code"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span><span class="p">,</span><span class="n">EmailMultiAlternatives</span>
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">Template</span><span class="p">,</span> <span class="n">Context</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.decorators</span> <span class="kn">import</span> <span class="n">login_required</span>
+<span class="kn">from</span> <span class="nn">dynamicresponse.response</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">models</span> <span class="kn">import</span> <span class="n">TransitSubsidy</span><span class="p">,</span><span class="n">TransitSubsidyForm</span><span class="p">,</span><span class="n">Mode</span><span class="p">,</span><span class="n">TransitSubsidyModes</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">json</span> <span class="kn">as</span> <span class="nn">simplejson</span>
+<span class="kn">from</span> <span class="nn">django.views.decorators.csrf</span> <span class="kn">import</span> <span class="n">csrf_exempt</span>
+
+
+<span class="n">SENDER</span> <span class="o">=</span> <span class="s">&#39;transitsubsidy@yourcompany.com&#39;</span>
+
+
+<span class="nd">@csrf_exempt</span>
+<span class="k">def</span> <span class="nf">modes_json</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a simple POST request, returns a JSON representation</span>
+<span class="sd">    of all the available transportion modes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s">&#39;POST&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;error: please use POST&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">modes</span> <span class="o">=</span> <span class="n">Mode</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span><span class="n">modes</span><span class="p">)</span></pre></div></td></tr><tr id="section-2"><td class="docs"><div class="pilwrap"><a href="#section-2" class="pilcrow">&#182;</a></div><p>util: should be here or ... ?</p>
+</td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">get_segments</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; </span>
+<span class="sd">    Parses a querystring looking for parameters starting with &#39;segment-type&#39;,</span>
+<span class="sd">    and returns a list of Dictionary objects representing commuting segements.</span>
+<span class="sd">    These are intended to be persisted in a many-2-many intermediate relationship.</span>
+
+<span class="sd">    *All* of the following are expected: segment-type_N, segement-amount_N, and, segments_N.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;segment-type&#39;</span><span class="p">):</span>
+            <span class="n">segment_data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">name_key</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">name_key</span> <span class="o">==</span> <span class="s">&#39;&#39;</span> <span class="ow">or</span> <span class="n">name_key</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">cost_key</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;amount&#39;</span><span class="p">)</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;type&#39;</span><span class="p">,</span><span class="s">&#39;other&#39;</span><span class="p">)</span>
+            <span class="n">other_key</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="n">other</span><span class="p">]</span>
+        
+            <span class="n">segment_data</span><span class="p">[</span><span class="s">&#39;type_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">segment_data</span><span class="p">[</span><span class="s">&#39;amount&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="n">cost_key</span><span class="p">]</span>
+            <span class="n">segment_data</span><span class="p">[</span><span class="s">&#39;other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">other_key</span>
+    
+            <span class="n">segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">segment_data</span><span class="p">)</span>
+    
+    <span class="k">return</span>  <span class="n">segments</span>
+
+
+<span class="nd">@login_required</span>
+<span class="k">def</span> <span class="nf">home</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The main view -- landing page, form, and submission.  Upon submission</span>
+<span class="sd">    the user should be redirected to a confirmation page and sent an email notification.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">TransitSubsidyForm</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">)</span></pre></div></td></tr><tr id="section-3"><td class="docs"><div class="pilwrap"><a href="#section-3" class="pilcrow">&#182;</a></div><p>raise forms.ValidationError ('Intentional forms validation error.')</p>
+</td><td class="code"><div class="highlight"><pre>        <span class="k">if</span> <span class="ow">not</span> <span class="n">form</span><span class="o">.</span><span class="n">is_valid</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;transit_subsidy/index.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;form&#39;</span> <span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s">&#39;errors&#39;</span> <span class="p">:</span> <span class="n">form</span><span class="o">.</span><span class="n">errors</span><span class="p">,</span>
+                                                                     <span class="s">&#39;user&#39;</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">},</span> <span class="n">RequestContext</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span></pre></div></td></tr><tr id="section-4"><td class="docs"><div class="pilwrap"><a href="#section-4" class="pilcrow">&#182;</a></div><p>Since the User object is in the request context on and not part of the form data,
+we need to suspend the commit and create a new TransitSubsidy Object and add the user
+to that instance prior to saving</p>
+</td><td class="code"><div class="highlight"><pre>            <span class="n">frm</span> <span class="o">=</span> <span class="n">form</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">commit</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">frm</span><span class="o">.</span><span class="n">date_enrolled</span> <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span><span class="o">.</span><span class="n">date_enrolled</span>
+            <span class="k">except</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+            <span class="k">if</span> <span class="bp">None</span> <span class="o">==</span> <span class="n">frm</span><span class="o">.</span><span class="n">date_enrolled</span><span class="p">:</span>
+                <span class="n">frm</span><span class="o">.</span><span class="n">date_enrolled</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+            <span class="n">frm</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span>
+            <span class="n">frm</span><span class="o">.</span><span class="n">date_withdrawn</span> <span class="o">=</span>  <span class="bp">None</span>
+
+            <span class="n">frm</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></pre></div></td></tr><tr id="section-5"><td class="docs"><div class="pilwrap"><a href="#section-5" class="pilcrow">&#182;</a></div><p>refactor!
+Clear out existing. </p>
+</td><td class="code"><div class="highlight"><pre>            <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transit_subsidy</span><span class="o">=</span><span class="n">frm</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
+            <span class="n">segments</span> <span class="o">=</span> <span class="n">get_segments</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">segments</span> <span class="p">:</span>
+                <span class="n">_mode</span> <span class="o">=</span> <span class="n">Mode</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span> <span class="nb">id</span><span class="o">=</span><span class="n">segment</span><span class="p">[</span><span class="s">&#39;type_id&#39;</span><span class="p">]</span> <span class="p">)</span>
+                <span class="n">_seg</span> <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="p">(</span><span class="n">transit_subsidy</span><span class="o">=</span><span class="n">frm</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">_mode</span><span class="p">,</span> <span class="n">cost</span><span class="o">=</span><span class="n">segment</span><span class="p">[</span><span class="s">&#39;amount&#39;</span><span class="p">],</span> <span class="n">other_mode</span><span class="o">=</span><span class="n">segment</span><span class="p">[</span><span class="s">&#39;other&#39;</span><span class="p">])</span>
+                <span class="n">_seg</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+             
+            <span class="n">modes</span> <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transit_subsidy</span><span class="o">=</span><span class="n">frm</span><span class="p">)</span>    
+
+            <span class="n">send_enrollment_notification</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span><span class="n">frm</span><span class="p">)</span> <span class="c">#user and transit objects as args</span>
+
+            <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;transit_subsidy/thank_you.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;form&#39;</span> <span class="p">:</span> <span class="n">frm</span><span class="p">,</span> <span class="s">&#39;user&#39;</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s">&#39;modes&#39;</span><span class="p">:</span> <span class="n">modes</span><span class="p">,</span>
+                                                                     <span class="s">&#39;success_message&#39;</span><span class="p">:</span> <span class="s">&#39;OK!&#39;</span><span class="p">},</span> <span class="n">RequestContext</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">transit</span> <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span></pre></div></td></tr><tr id="section-6"><td class="docs"><div class="pilwrap"><a href="#section-6" class="pilcrow">&#182;</a></div><p>Because of ATO, we shouldn't need to encrypt this, but we could if needed:
+transit.last<em>four</em>ssn = decrypt(<em>_KEY,transit.last</em>four_ssn)</p>
+</td><td class="code"><div class="highlight"><pre>            <span class="n">returning_user</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">transit</span><span class="o">.</span><span class="n">timestamp</span>
+            <span class="n">modes</span> <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transit_subsidy</span><span class="o">=</span><span class="n">transit</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+            <span class="n">transit</span> <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="p">()</span>
+            <span class="n">returning_user</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="n">modes</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">form</span> <span class="o">=</span> <span class="n">TransitSubsidyForm</span><span class="p">(</span><span class="n">instance</span><span class="o">=</span><span class="n">transit</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;transit_subsidy/index.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;form&#39;</span> <span class="p">:</span> <span class="n">form</span><span class="p">,</span> <span class="s">&#39;user&#39;</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+                                                                 <span class="s">&#39;returning_user&#39;</span><span class="p">:</span> <span class="n">returning_user</span><span class="p">,</span>
+                                                                 <span class="s">&#39;modes&#39;</span><span class="p">:</span> <span class="n">modes</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span> <span class="p">:</span> <span class="n">timestamp</span><span class="p">,</span>
+                                                                 <span class="s">&#39;transit&#39;</span><span class="p">:</span> <span class="n">transit</span> <span class="p">},</span>
+                                                                  <span class="n">RequestContext</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="p">)</span>
+
+
+
+<span class="k">def</span> <span class="nf">send_enrollment_notification</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">transit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sends an email notification to the person who submitted the transit subsidy request.</span>
+<span class="sd">    </span>
+<span class="sd">    @param user:  the person who requested the subsidy</span>
+<span class="sd">    @param transit: L{TransitSubsidy} the transit subsidy claim object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_sender</span> <span class="o">=</span> <span class="n">SENDER</span>
+    <span class="n">_subject</span> <span class="o">=</span> <span class="s">&#39;Transit Subsidy Program: Thank You for Beginning Your Enrollment&#39;</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    &lt;style&gt;html,p{font-family: arial, helvetica}&lt;/style&gt;</span>
+
+<span class="s">    &lt;p&gt;Dear {{user.first_name}},&lt;/p&gt;</span>
+
+<span class="s">    &lt;p&gt;Thank you for your enrollment in the Transit Subsidy Program!&lt;/p&gt;</span>
+
+<span class="s">    &lt;p&gt;You submitted a Transit Subsidy request on {{ transit.timestamp }} for ${{ transit.amount }} per month.&lt;/p&gt;</span>
+
+<span class="s">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">({</span><span class="s">&#39;user&#39;</span><span class="p">:</span><span class="n">user</span><span class="p">,</span><span class="s">&#39;transit&#39;</span><span class="p">:</span><span class="n">transit</span><span class="p">})</span>
+
+    <span class="n">subject</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="n">to</span> <span class="o">=</span> <span class="n">_subject</span><span class="p">,</span> <span class="n">_sender</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span>
+    <span class="n">text_content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="n">html_content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">EmailMultiAlternatives</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">html_content</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="p">[</span><span class="n">to</span><span class="p">])</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">attach_alternative</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s">&quot;text/html&quot;</span><span class="p">)</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">content_subtype</span> <span class="o">=</span> <span class="s">&quot;html&quot;</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">send_withdrawl_notification</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sends an email notification to the person who requested to be withdrawn from the program.</span>
+<span class="sd">    </span>
+<span class="sd">    @param user:  the person who requested the subsidy</span>
+<span class="sd">    @see https://docs.djangoproject.com/en/dev/topics/auth/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_sender</span> <span class="o">=</span> <span class="n">SENDER</span>
+    <span class="n">_subject</span> <span class="o">=</span> <span class="s">&#39;Transit Subsidy Program: Thank You for Beginning Your Enrollment&#39;</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">Template</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    &lt;style&gt;html,p{font-family: arial, helvetica}&lt;/style&gt;</span>
+
+<span class="s">    &lt;p&gt;Dear {{user.first_name}},&lt;/p&gt;</span>
+
+<span class="s">    &lt;p&gt;You have been withdrawn from the Transit Subsidy Program on {{ transit.timestamp }}.&lt;/p&gt;</span>
+
+<span class="s">    &lt;p&gt;This will be reflected in the next cycle.  Also, if you need to re-enroll, please visit </span>
+<span class="s">    the enrollment application again.</span>
+<span class="s">    &lt;/p&gt;</span>
+
+<span class="s">    &quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">ctx</span> <span class="o">=</span> <span class="n">Context</span><span class="p">({</span><span class="s">&#39;user&#39;</span><span class="p">:</span><span class="n">user</span><span class="p">})</span>
+    
+    <span class="n">subject</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="n">to</span> <span class="o">=</span> <span class="n">_subject</span><span class="p">,</span> <span class="n">_sender</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span>
+    <span class="n">text_content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="n">html_content</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">EmailMultiAlternatives</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">html_content</span><span class="p">,</span> <span class="n">from_email</span><span class="p">,</span> <span class="p">[</span><span class="n">to</span><span class="p">])</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">attach_alternative</span><span class="p">(</span><span class="n">html_content</span><span class="p">,</span> <span class="s">&quot;text/html&quot;</span><span class="p">)</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">content_subtype</span> <span class="o">=</span> <span class="s">&quot;html&quot;</span>
+    <span class="n">e</span><span class="o">.</span><span class="n">send</span><span class="p">()</span>
+
+
+
+<span class="nd">@login_required</span>
+<span class="k">def</span> <span class="nf">cancel</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">!=</span> <span class="s">&#39;POST&#39;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Please POST to this URL&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">transit</span> <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="n">transit</span><span class="o">.</span><span class="n">date_withdrawn</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">transit</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">send_withdrawl_notification</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;transit_subsidy/cancel.html&#39;</span><span class="p">,</span> <span class="p">{</span> <span class="s">&#39;user&#39;</span> <span class="p">:</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s">&#39;transit&#39;</span><span class="p">:</span> <span class="n">transit</span><span class="p">},</span>
+                                                                    <span class="n">RequestContext</span><span class="p">(</span><span class="n">request</span><span class="p">)</span> <span class="p">)</span>
+        </pre></div></td></tr><tr id="section-7"><td class="docs"><div class="pilwrap"><a href="#section-7" class="pilcrow">&#182;</a></div><p>Lots to do here!</p>
+</td><td class="code"><div class="highlight"><pre><span class="nd">@login_required</span>
+<span class="k">def</span> <span class="nf">dump_csv</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">mimetype</span><span class="o">=</span><span class="s">&#39;text/csv&#39;</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s">&#39;Content-Disposition&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;attachment; filename=transit_subsidy.csv&#39;</span>
+    <span class="n">claims</span> <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span>   <span class="s">&#39;Last Name&#39;</span><span class="p">,</span> <span class="s">&#39;First Name&#39;</span><span class="p">,</span> <span class="s">&#39;Email&#39;</span><span class="p">,</span><span class="s">&#39;Last Four SSN&#39;</span><span class="p">,</span>  
+                        <span class="s">&#39;Date Enrolled&#39;</span><span class="p">,</span> <span class="s">&#39;Date Updated&#39;</span><span class="p">,</span> <span class="s">&#39;Origin Location&#39;</span><span class="p">,</span> <span class="s">&#39;Destination&#39;</span><span class="p">,</span> 
+                        <span class="s">&#39;Number of Workdays&#39;</span><span class="p">,</span> <span class="s">&#39;Daily Roundtrip Cost&#39;</span><span class="p">,</span>
+                        <span class="s">&#39;Daily Parking Cost&#39;</span><span class="p">,</span> <span class="s">&#39;Total Claim Amount&#39;</span><span class="p">,</span> <span class="s">&#39;DC Metro Smartrip No.&#39;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">claim</span> <span class="ow">in</span> <span class="n">claims</span><span class="p">:</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">claim</span><span class="o">.</span><span class="n">user</span> 
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span>
+                          <span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span><span class="s">&#39;ignore&#39;</span><span class="p">),</span> 
+                          <span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span><span class="s">&#39;ignore&#39;</span><span class="p">),</span>
+                          <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span><span class="s">&#39;ignore&#39;</span><span class="p">),</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">last_four_ssn</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">date_enrolled</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">timestamp</span><span class="p">,</span> 
+                          <span class="n">claim</span><span class="o">.</span><span class="n">origin_street</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="n">claim</span><span class="o">.</span><span class="n">origin_city</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> 
+                          <span class="n">claim</span><span class="o">.</span><span class="n">origin_state</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span>  <span class="n">claim</span><span class="o">.</span><span class="n">origin_zip</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">destination</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">number_of_workdays</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">daily_roundtrip_cost</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">daily_parking_cost</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">amount</span><span class="p">,</span>
+                          <span class="n">claim</span><span class="o">.</span><span class="n">dc_wmta_smartrip_id</span><span class="p">,</span>
+                        <span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">response</span>
+
+
+
+
+<span class="nd">@login_required</span>
+<span class="k">def</span> <span class="nf">approval_json</span><span class="p">(</span><span class="n">request</span><span class="p">):</span></pre></div></td></tr><tr id="section-8"><td class="docs"><div class="pilwrap"><a href="#section-8" class="pilcrow">&#182;</a></div><p>Distribution buckets, need to compute
+TranBen , Smartrip, Regional, Other, TRANServe</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">res</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+    <span class="n">json</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;page&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s">&#39;total&#39;</span><span class="p">:</span> <span class="mi">0</span> <span class="p">,</span> <span class="s">&#39;records&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;rows&#39;</span><span class="p">:</span> <span class="p">[]</span> <span class="p">}</span>
+    <span class="n">modes</span>  <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></pre></div></td></tr><tr id="section-9"><td class="docs"><div class="pilwrap"><a href="#section-9" class="pilcrow">&#182;</a></div><p>res +=   unicode( Mode.objects.values('distribution_method') )</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">res</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n\n</span><span class="s">&#39;</span>
+    
+    <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">_tran_info</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="n">ts_modes</span> <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span> <span class="n">transit_subsidy</span><span class="o">=</span><span class="n">trans</span> <span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;username&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">)</span> 
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;first_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;last_name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="p">),</span><span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="p">))</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;email&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;total_amount&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">amount</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;last_four_ssn&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">last_four_ssn</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;date_enrolled&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">date_enrolled</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span> 
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_street&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_street</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_city&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_city</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span> <span class="p">)</span> 
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_state&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_state</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_zip&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_zip</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_address&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">, </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_street&#39;</span><span class="p">],</span><span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_city&#39;</span><span class="p">],</span><span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_state&#39;</span><span class="p">],</span><span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_zip&#39;</span><span class="p">])</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;destination&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">destination</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;workdays&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">number_of_workdays</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;daily+roundtrip_cost&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">daily_roundtrip_cost</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;daily_parking_cost&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">daily_parking_cost</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;smartrip_id&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">dc_wmta_smartrip_id</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;approved_by&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">approved_by</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;approved_on&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">approved_on</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;modes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span> <span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transit_subsidy</span><span class="o">=</span><span class="n">trans</span><span class="p">)</span> <span class="p">]</span>
+        <span class="n">json</span><span class="p">[</span><span class="s">&#39;rows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_tran_info</span><span class="p">)</span>        
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span> <span class="n">json</span> <span class="p">)</span></pre></div></td></tr><tr id="section-10"><td class="docs"><div class="pilwrap"><a href="#section-10" class="pilcrow">&#182;</a></div><p>return HttpResponse( res , mimetype='text/plain')</p>
+</td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">approve_transit</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs ajaxy approval of a transit subsidy</span>
+<span class="sd">    &quot;&quot;&quot;</span></pre></div></td></tr><tr id="section-11"><td class="docs"><div class="pilwrap"><a href="#section-11" class="pilcrow">&#182;</a></div><h4>Not Implemented</h4>
+
+<p>use request.user as signatore
+fetch transit based on request.
+uid = request.GET['user']
+print uid
+user = User.objects.get()
+tran = TransitSubsidy.objects.filter(  )</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">json</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;approver&#39;</span><span class="p">:</span><span class="s">&#39;Aprrover Name&#39;</span><span class="p">,</span><span class="s">&#39;approved_on&#39;</span><span class="p">:</span><span class="s">&#39;2012-02-14 11:09 AM&#39;</span> <span class="p">}</span>
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span> <span class="n">json</span> <span class="p">)</span></pre></div></td></tr><tr id="section-12"><td class="docs"><div class="pilwrap"><a href="#section-12" class="pilcrow">&#182;</a></div><p>return HttpResponse(uid)</p>
+</td><td class="code"><div class="highlight"><pre></pre></div></td></tr><tr id="section-13"><td class="docs"><div class="pilwrap"><a href="#section-13" class="pilcrow">&#182;</a></div><p>Below is eexperimental stuff</p>
+</td><td class="code"><div class="highlight"><pre></pre></div></td></tr><tr id="section-14"><td class="docs"><div class="pilwrap"><a href="#section-14" class="pilcrow">&#182;</a></div><p>Dump of raw JSON data. This should populate a form and allow Alex to check off as approved</p>
+</td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">__approval_json</span><span class="p">(</span><span class="n">request</span><span class="p">):</span></pre></div></td></tr><tr id="section-15"><td class="docs"><div class="pilwrap"><a href="#section-15" class="pilcrow">&#182;</a></div><p>Look at request.user for allowable staff</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">staff</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&#39;sheltonw@DO.TREAS.GOV&#39;</span> <span class="p">)</span></pre></div></td></tr><tr id="section-16"><td class="docs"><div class="pilwrap"><a href="#section-16" class="pilcrow">&#182;</a></div><p>search staff for valid user</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;[error]&#39;</span><span class="p">)</span> 
+
+    <span class="kn">import</span> <span class="nn">itertools</span>
+    
+
+    <span class="n">modes</span>  <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">transits</span>  <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">people</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></pre></div></td></tr><tr id="section-17"><td class="docs"><div class="pilwrap"><a href="#section-17" class="pilcrow">&#182;</a></div><p>, [ (mode) for mode in modes.filter(transit<em>subsidy</em>id=tran.user_id))</p>
+</td><td class="code"><div class="highlight"><pre>    
+
+    <span class="n">bennies</span> <span class="o">=</span> <span class="p">[</span>  <span class="p">(</span><span class="n">tran</span><span class="p">,</span> <span class="n">tran</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="n">people</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">tran</span><span class="o">.</span><span class="n">user</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span> <span class="k">for</span> <span class="n">tran</span> <span class="ow">in</span> <span class="n">transits</span> <span class="p">]</span>
+    <span class="n">chain</span> <span class="o">=</span>  <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">bennies</span><span class="p">)</span>
+    <span class="n">json</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;page&#39;</span><span class="p">:</span><span class="s">&#39;1&#39;</span><span class="p">,</span> <span class="s">&#39;total&#39;</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">bennies</span><span class="p">),</span> <span class="s">&#39;records&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bennies</span><span class="p">),</span> <span class="s">&#39;rows&#39;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span> <span class="p">}</span></pre></div></td></tr><tr id="section-18"><td class="docs"><div class="pilwrap"><a href="#section-18" class="pilcrow">&#182;</a></div><p>bennies = [  ( tran, tran.user, people.filter(user=tran.user)[0], [ (mode) for mode in modes.filter(transit<em>subsidy</em>id=tran.user<em>id) ] ) for tran in transits ]
+bennies = [  { 'transit': tran, 'user':tran.user, 'user</em>profile':people.filter(user=tran.user)[0], 'modes':[ (mode) for mode in modes.filter(transit<em>subsidy</em>id=tran.user_id) ] } for tran in transits ]</p>
+</td><td class="code"><div class="highlight"><pre>    </pre></div></td></tr><tr id="section-19"><td class="docs"><div class="pilwrap"><a href="#section-19" class="pilcrow">&#182;</a></div><p>chain =  itertools.chain(people)
+import pdb;pdb.set_trace()</p>
+</td><td class="code"><div class="highlight"><pre>    
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span> <span class="n">json</span> <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">approve_cool</span><span class="p">(</span><span class="n">request</span><span class="p">):</span></pre></div></td></tr><tr id="section-20"><td class="docs"><div class="pilwrap"><a href="#section-20" class="pilcrow">&#182;</a></div><p>Distribution buckets, need to compute
+TranBen , Smartrip, Regional, Other, TRANServe</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">trans</span>  <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">users</span>  <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">modes</span>  <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[</span> <span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">transitsubsidy_set</span><span class="p">)</span> <span class="k">for</span> <span class="n">user</span> <span class="ow">in</span> <span class="n">users</span> <span class="p">]</span>
+
+    <span class="n">approval</span> <span class="o">=</span> <span class="p">[</span> <span class="n">request</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="p">]</span>
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span> <span class="n">approval</span> <span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">approve</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render_to_response</span><span class="p">(</span><span class="s">&#39;transit_subsidy/approve.html&#39;</span><span class="p">,{},</span><span class="n">RequestContext</span><span class="p">(</span><span class="n">request</span><span class="p">))</span>
+
+
+<span class="nd">@login_required</span>
+<span class="k">def</span> <span class="nf">old_approval_json</span><span class="p">(</span><span class="n">request</span><span class="p">):</span></pre></div></td></tr><tr id="section-21"><td class="docs"><div class="pilwrap"><a href="#section-21" class="pilcrow">&#182;</a></div><p>Distribution buckets, need to compute
+TranBen , Smartrip, Regional, Other, TRANServe</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">res</span> <span class="o">=</span> <span class="s">u&#39;&#39;</span>
+    <span class="n">json</span> <span class="o">=</span> <span class="p">{</span> <span class="s">&#39;page&#39;</span><span class="p">:</span> <span class="s">&#39;0&#39;</span><span class="p">,</span> <span class="s">&#39;total&#39;</span><span class="p">:</span> <span class="s">&#39;0&#39;</span> <span class="p">,</span> <span class="s">&#39;records&#39;</span><span class="p">:</span> <span class="s">&#39;0&#39;</span><span class="p">,</span> <span class="s">&#39;rows&#39;</span><span class="p">:</span> <span class="p">[]</span> <span class="p">}</span>
+    <span class="n">modes</span>  <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">_tran_info</span> <span class="o">=</span> <span class="p">{}</span>
+        
+        <span class="n">ts_modes</span> <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span> <span class="n">transit_subsidy</span><span class="o">=</span><span class="n">trans</span> <span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;username&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">username</span><span class="p">)</span> 
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span> <span class="o">+</span>  <span class="s">&#39;, &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">first_name</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;total_commute_cost&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">total_commute_cost</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;email&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;total_amount&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">amount</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;last_four_ssn&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">last_four_ssn</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;date_enrolled&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">date_enrolled</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;timestamp&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">timestamp</span><span class="p">)</span> 
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;origin_address&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_street</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_city</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ascii&#39;</span><span class="p">,</span><span class="s">&#39;ignore&#39;</span><span class="p">)</span> <span class="p">)</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span> <span class="o">+</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_state</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">origin_zip</span><span class="p">)</span> 
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;destination&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">destination</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;workdays&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">number_of_workdays</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;daily_roundtrip_cost&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">daily_roundtrip_cost</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;daily_parking_cost&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">daily_parking_cost</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;smartrip_id&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">dc_wmta_smartrip_id</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;approved_by&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">approved_by</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;approved_on&#39;</span><span class="p">]</span> <span class="o">=</span>  <span class="nb">unicode</span><span class="p">(</span><span class="n">trans</span><span class="o">.</span><span class="n">approved_on</span><span class="p">)</span>
+        <span class="n">_tran_info</span><span class="p">[</span><span class="s">&#39;modes&#39;</span><span class="p">]</span> <span class="o">=</span>   <span class="n">ts_modes</span>  <span class="c">#[ (mode) for mode in modes.filter(id=trans.user_id) ]</span>
+        <span class="n">json</span><span class="p">[</span><span class="s">&#39;rows&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_tran_info</span><span class="p">)</span>        
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span> <span class="n">json</span> <span class="p">)</span></pre></div></td></tr><tr id="section-22"><td class="docs"><div class="pilwrap"><a href="#section-22" class="pilcrow">&#182;</a></div><p>Dump of raw JSON data. This should populate a form and allow Alex to check off as approved</p>
+</td><td class="code"><div class="highlight"><pre><span class="k">def</span> <span class="nf">approval_json_comp</span><span class="p">(</span><span class="n">request</span><span class="p">):</span></pre></div></td></tr><tr id="section-23"><td class="docs"><div class="pilwrap"><a href="#section-23" class="pilcrow">&#182;</a></div><p>Look at request.user for allowable staff</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">staff</span> <span class="o">=</span> <span class="p">(</span> <span class="s">&#39;sheltonw@DO.TREAS.GOV&#39;</span> <span class="p">)</span></pre></div></td></tr><tr id="section-24"><td class="docs"><div class="pilwrap"><a href="#section-24" class="pilcrow">&#182;</a></div><p>search staff for valid user</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;[error]&#39;</span><span class="p">)</span> 
+
+    <span class="n">modes</span>  <span class="o">=</span> <span class="n">TransitSubsidyModes</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">transits</span>  <span class="o">=</span> <span class="n">TransitSubsidy</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+    <span class="n">people</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span></pre></div></td></tr><tr id="section-25"><td class="docs"><div class="pilwrap"><a href="#section-25" class="pilcrow">&#182;</a></div><p>bennies = [  ( tran, tran.user, people.filter(user=tran.user)[0], [ (mode) for mode in modes.filter(transit<em>subsidy</em>id=tran.user_id) ] ) for tran in transits ]</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="n">bennies</span> <span class="o">=</span> <span class="p">[</span>  <span class="p">{</span> <span class="s">&#39;transit&#39;</span><span class="p">:</span> <span class="n">tran</span><span class="p">,</span> <span class="s">&#39;user&#39;</span><span class="p">:</span><span class="n">tran</span><span class="o">.</span><span class="n">user</span><span class="p">,</span> <span class="s">&#39;user_profile&#39;</span><span class="p">:</span><span class="n">people</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="n">tran</span><span class="o">.</span><span class="n">user</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;modes&#39;</span><span class="p">:[</span> <span class="p">(</span><span class="n">mode</span><span class="p">)</span> <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">transit_subsidy</span><span class="o">=</span><span class="n">tran</span><span class="p">)</span> <span class="p">]</span> <span class="p">}</span> <span class="k">for</span> <span class="n">tran</span> <span class="ow">in</span> <span class="n">transits</span> <span class="p">]</span>
+    </pre></div></td></tr><tr id="section-26"><td class="docs"><div class="pilwrap"><a href="#section-26" class="pilcrow">&#182;</a></div><p>chain =  itertools.chain(people)
+import pdb;pdb.set_trace()</p>
+</td><td class="code"><div class="highlight"><pre>    
+    <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">(</span> <span class="n">bennies</span> <span class="p">)</span>
+
+</pre></div></td></tr></tbody></table><div id="generated">generated Sun Feb 17 2013 20:30:04 GMT-0500 (EST)  </div></div></body></html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html><html><head><title>agents.clj</title><meta http-equiv="Content-Type" content="text/html" charset="UTF-8"><link rel="stylesheet" media="all" href="./docco.css"></head><body><div id="container"><div id="background"></div><div id="jump_to">Jump To &hellip;<div id="jump_wrapper"><div id="jump_page"><a href="./index.html" class="source"><span class="file_name">README</span></a><a href="././agents.clj.html" class="source selected"><span class="base_path">. / </span><span class="file_name">agents.clj</span></a><a href="././arma.R.html" class="source "><span class="base_path">. / </span><span class="file_name">arma.R</span></a><a href="././crypto_null.c.html" class="source "><span class="base_path">. / </span><span class="file_name">crypto_null.c</span></a><a href="././Foo.java.html" class="source "><span class="base_path">. / </span><span class="file_name">Foo.java</span></a><a href="././gen-ide-json.php.html" class="source "><span class="base_path">. / </span><span class="file_name">gen-ide-json.php</span></a><a href="././hello.bf.html" class="source "><span class="base_path">. / </span><span class="file_name">hello.bf</span></a><a href="././phantomjs.pp.html" class="source "><span class="base_path">. / </span><span class="file_name">phantomjs.pp</span></a><a href="././test.js.html" class="source "><span class="base_path">. / </span><span class="file_name">test.js</span></a><a href="././views.py.html" class="source "><span class="base_path">. / </span><span class="file_name">views.py</span></a></div></div></div><table cellpadding="0" cellspacing="0"><thead><tr><th class="docs"><h1>agents.clj</h1><div class="filepath">./</div></th><th class="code"></th></tr></thead><tbody><tr id="section-1"><td class="docs"><div class="pilwrap"><a href="#section-1" class="pilcrow">&#182;</a></div><p>Copyright (c) Rich Hickey. All rights reserved.
+  The use and distribution terms for this software are covered by the
+  <a href="http://opensource.org/licenses/eclipse-1.0.php">Eclipse Public License 1.0</a>
+  which can be found in the file epl-v10.html at the root of this distribution.
+  By using this software in any fashion, you are agreeing to be bound by
+  the terms of this license.
+  You must not remove this notice, or any other, from this software.</p>
+
+<p>; Author: Shawn Hoover</p>
+</td><td class="code"><div class="highlight"><pre><span class="p">(</span><span class="kd">ns </span><span class="nv">clojure.test-clojure.agents</span>
+  <span class="p">(</span><span class="ss">:use</span> <span class="nv">clojure.test</span><span class="p">)</span>
+  <span class="p">(</span><span class="ss">:import</span> <span class="p">[</span><span class="nv">java.util.concurrent</span> <span class="nv">CountDownLatch</span> <span class="nv">TimeUnit</span><span class="p">]))</span></pre></div></td></tr><tr id="section-2"><td class="docs"><div class="pilwrap"><a href="#section-2" class="pilcrow">&#182;</a></div><p>; tests are fragile. If wait fails, could indicate that
+; build box is thrashing.</p>
+</td><td class="code"><div class="highlight"><pre><span class="p">(</span><span class="k">def </span><span class="nv">fragile-wait</span> <span class="mi">1000</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">handle-all-throwables-during-agent-actions</span></pre></div></td></tr><tr id="section-3"><td class="docs"><div class="pilwrap"><a href="#section-3" class="pilcrow">&#182;</a></div><p>; Bug fixed in r1198; previously hung Clojure or didn't report agent errors
+; after OutOfMemoryError, yet wouldn't execute new actions.</p>
+</td><td class="code"><div class="highlight"><pre>  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">agt</span> <span class="p">(</span><span class="nb">agent </span><span class="nv">nil</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">state</span><span class="p">]</span> <span class="p">(</span><span class="nf">throw</span> <span class="p">(</span><span class="nf">Throwable.</span> <span class="s">&quot;just testing Throwables&quot;</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">try</span></pre></div></td></tr><tr id="section-4"><td class="docs"><div class="pilwrap"><a href="#section-4" class="pilcrow">&#182;</a></div><p>; Let the action finish; eat the "agent has errors" error that bubbles up</p>
+</td><td class="code"><div class="highlight"><pre>     <span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)</span>
+     <span class="p">(</span><span class="nf">catch</span> <span class="nv">RuntimeException</span> <span class="nv">_</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">instance? </span><span class="nv">Throwable</span> <span class="p">(</span><span class="nb">first </span><span class="p">(</span><span class="nb">agent-errors </span><span class="nv">agt</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">1</span> <span class="p">(</span><span class="nb">count </span><span class="p">(</span><span class="nb">agent-errors </span><span class="nv">agt</span><span class="p">))))</span></pre></div></td></tr><tr id="section-5"><td class="docs"><div class="pilwrap"><a href="#section-5" class="pilcrow">&#182;</a></div><p>; And now send an action that should work</p>
+</td><td class="code"><div class="highlight"><pre>    <span class="p">(</span><span class="nb">clear-agent-errors </span><span class="nv">agt</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">nil</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">nil?</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="o">@</span><span class="nv">agt</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">default-modes</span>
+  <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="ss">:fail</span> <span class="p">(</span><span class="nf">error-mode</span> <span class="p">(</span><span class="nb">agent </span><span class="nv">nil</span><span class="p">))))</span>
+  <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="ss">:continue</span> <span class="p">(</span><span class="nf">error-mode</span> <span class="p">(</span><span class="nb">agent </span><span class="nv">nil</span> <span class="ss">:error-handler</span> <span class="nv">println</span><span class="p">)))))</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">continue-handler</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">err</span> <span class="p">(</span><span class="nf">atom</span> <span class="nv">nil</span><span class="p">)</span>
+        <span class="nv">agt</span> <span class="p">(</span><span class="nb">agent </span><span class="mi">0</span> <span class="ss">:error-mode</span> <span class="ss">:continue</span> <span class="ss">:error-handler</span> <span class="o">#</span><span class="p">(</span><span class="nf">reset!</span> <span class="nv">err</span> <span class="nv">%</span><span class="o">&amp;</span><span class="p">))]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">/</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">nil? </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">agt</span> <span class="p">(</span><span class="nb">first </span><span class="o">@</span><span class="nv">err</span><span class="p">)))</span>
+  <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">instance? </span><span class="nv">ArithmeticException</span> <span class="p">(</span><span class="nb">second </span><span class="o">@</span><span class="nv">err</span><span class="p">))))))</span></pre></div></td></tr><tr id="section-6"><td class="docs"><div class="pilwrap"><a href="#section-6" class="pilcrow">&#182;</a></div><p>; TODO: make these tests deterministic (i.e. not sleep and hope)</p>
+</td><td class="code"><div class="highlight"><pre><span class="o">#</span><span class="nv">_</span><span class="p">(</span><span class="nf">deftest</span> <span class="nv">fail-handler</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">err</span> <span class="p">(</span><span class="nf">atom</span> <span class="nv">nil</span><span class="p">)</span>
+        <span class="nv">agt</span> <span class="p">(</span><span class="nb">agent </span><span class="mi">0</span> <span class="ss">:error-mode</span> <span class="ss">:fail</span> <span class="ss">:error-handler</span> <span class="o">#</span><span class="p">(</span><span class="nf">reset!</span> <span class="nv">err</span> <span class="nv">%</span><span class="o">&amp;</span><span class="p">))]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">/</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">instance? </span><span class="nv">ArithmeticException</span> <span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">agt</span> <span class="p">(</span><span class="nb">first </span><span class="o">@</span><span class="nv">err</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">instance? </span><span class="nv">ArithmeticException</span> <span class="p">(</span><span class="nb">second </span><span class="o">@</span><span class="nv">err</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nf">thrown?</span> <span class="nv">RuntimeException</span> <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">inc</span><span class="p">)))))</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">can-send-from-error-handler-before-popping-action-that-caused-error</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">latch</span> <span class="p">(</span><span class="nf">CountDownLatch.</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="nv">target-agent</span> <span class="p">(</span><span class="nb">agent </span><span class="ss">:before-error</span><span class="p">)</span>
+        <span class="nv">handler</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">agt</span> <span class="nv">err</span><span class="p">]</span>
+                  <span class="p">(</span><span class="nb">send </span><span class="nv">target-agent</span>
+                        <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">_</span><span class="p">]</span> <span class="p">(</span><span class="nf">.countDown</span> <span class="nv">latch</span><span class="p">))))</span>
+        <span class="nv">failing-agent</span> <span class="p">(</span><span class="nb">agent </span><span class="nv">nil</span> <span class="ss">:error-handler</span> <span class="nv">handler</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">failing-agent</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">_</span><span class="p">]</span> <span class="p">(</span><span class="nf">throw</span> <span class="p">(</span><span class="nf">RuntimeException.</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nf">.await</span> <span class="nv">latch</span> <span class="mi">10</span> <span class="nv">TimeUnit/SECONDS</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">can-send-to-self-from-error-handler-before-popping-action-that-caused-error</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">latch</span> <span class="p">(</span><span class="nf">CountDownLatch.</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="nv">handler</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">agt</span> <span class="nv">err</span><span class="p">]</span>
+                  <span class="p">(</span><span class="nb">send </span><span class="nv">*agent*</span>
+                        <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">_</span><span class="p">]</span> <span class="p">(</span><span class="nf">.countDown</span> <span class="nv">latch</span><span class="p">))))</span>
+        <span class="nv">failing-agent</span> <span class="p">(</span><span class="nb">agent </span><span class="nv">nil</span> <span class="ss">:error-handler</span> <span class="nv">handler</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">failing-agent</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">_</span><span class="p">]</span> <span class="p">(</span><span class="nf">throw</span> <span class="p">(</span><span class="nf">RuntimeException.</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nf">.await</span> <span class="nv">latch</span> <span class="mi">10</span> <span class="nv">TimeUnit/SECONDS</span><span class="p">))))</span>
+
+<span class="o">#</span><span class="nv">_</span><span class="p">(</span><span class="nf">deftest</span> <span class="nv">restart-no-clear</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">p</span> <span class="p">(</span><span class="nf">promise</span><span class="p">)</span>
+        <span class="nv">agt</span> <span class="p">(</span><span class="nb">agent </span><span class="mi">1</span> <span class="ss">:error-mode</span> <span class="ss">:fail</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">v</span><span class="p">]</span> <span class="o">@</span><span class="nv">p</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">/</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">inc</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">inc</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">deliver</span> <span class="nv">p</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">ArithmeticException</span> <span class="p">(</span><span class="nb">class </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">restart-agent</span> <span class="nv">agt</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">12</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">nil? </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">)))))</span>
+
+<span class="o">#</span><span class="nv">_</span><span class="p">(</span><span class="nf">deftest</span> <span class="nv">restart-clear</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">p</span> <span class="p">(</span><span class="nf">promise</span><span class="p">)</span>
+        <span class="nv">agt</span> <span class="p">(</span><span class="nb">agent </span><span class="mi">1</span> <span class="ss">:error-mode</span> <span class="ss">:fail</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">v</span><span class="p">]</span> <span class="o">@</span><span class="nv">p</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">/</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">inc</span><span class="p">)</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">inc</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">deliver</span> <span class="nv">p</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">0</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">ArithmeticException</span> <span class="p">(</span><span class="nb">class </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">restart-agent</span> <span class="nv">agt</span> <span class="mi">10</span> <span class="ss">:clear-actions</span> <span class="nv">true</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">10</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">nil? </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="nv">inc</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">11</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">nil? </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">)))))</span>
+
+<span class="o">#</span><span class="nv">_</span><span class="p">(</span><span class="nf">deftest</span> <span class="nv">invalid-restart</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">p</span> <span class="p">(</span><span class="nf">promise</span><span class="p">)</span>
+        <span class="nv">agt</span> <span class="p">(</span><span class="nb">agent </span><span class="mi">2</span> <span class="ss">:error-mode</span> <span class="ss">:fail</span> <span class="ss">:validator</span> <span class="nv">even?</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nf">thrown?</span> <span class="nv">RuntimeException</span> <span class="p">(</span><span class="nf">restart-agent</span> <span class="nv">agt</span> <span class="mi">4</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">v</span><span class="p">]</span> <span class="o">@</span><span class="nv">p</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="p">(</span><span class="nb">partial + </span><span class="mi">2</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">agt</span> <span class="p">(</span><span class="nb">partial + </span><span class="mi">2</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">deliver</span> <span class="nv">p</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">2</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">IllegalStateException</span> <span class="p">(</span><span class="nb">class </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">))))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nf">thrown?</span> <span class="nv">RuntimeException</span> <span class="p">(</span><span class="nf">restart-agent</span> <span class="nv">agt</span> <span class="mi">5</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">restart-agent</span> <span class="nv">agt</span> <span class="mi">6</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">true? </span><span class="p">(</span><span class="nb">await-for </span><span class="nv">fragile-wait</span> <span class="nv">agt</span><span class="p">)))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="mi">10</span> <span class="o">@</span><span class="nv">agt</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">nil? </span><span class="p">(</span><span class="nf">agent-error</span> <span class="nv">agt</span><span class="p">)))))</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">earmuff-agent-bound</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">a</span> <span class="p">(</span><span class="nb">agent </span><span class="mi">1</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">send </span><span class="nv">a</span> <span class="p">(</span><span class="k">fn </span><span class="p">[</span><span class="nv">_</span><span class="p">]</span> <span class="nv">*agent*</span><span class="p">))</span>
+    <span class="p">(</span><span class="nb">await </span><span class="nv">a</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">a</span> <span class="o">@</span><span class="nv">a</span><span class="p">))))</span>
+
+<span class="p">(</span><span class="k">def </span><span class="o">^</span><span class="ss">:dynamic</span> <span class="nv">*bind-me*</span> <span class="ss">:root-binding</span><span class="p">)</span>
+
+<span class="p">(</span><span class="nf">deftest</span> <span class="nv">thread-conveyance-to-agents</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">a</span> <span class="p">(</span><span class="nb">agent </span><span class="nv">nil</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">doto </span><span class="p">(</span><span class="nf">Thread.</span>
+           <span class="p">(</span><span class="k">fn </span><span class="p">[]</span>
+             <span class="p">(</span><span class="nb">binding </span><span class="p">[</span><span class="nv">*bind-me*</span> <span class="ss">:thread-binding</span><span class="p">]</span>
+               <span class="p">(</span><span class="nb">send </span><span class="nv">a</span> <span class="p">(</span><span class="nb">constantly </span><span class="nv">*bind-me*</span><span class="p">)))</span>
+             <span class="p">(</span><span class="nb">await </span><span class="nv">a</span><span class="p">)))</span>
+      <span class="p">(</span><span class="nf">.start</span><span class="p">)</span>
+      <span class="p">(</span><span class="nf">.join</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="o">@</span><span class="nv">a</span> <span class="ss">:thread-binding</span><span class="p">))))</span></pre></div></td></tr><tr id="section-7"><td class="docs"><div class="pilwrap"><a href="#section-7" class="pilcrow">&#182;</a></div><p>; check for a race condition that was causing seque to leak threads from the
+; send-off pool. Specifically, if we consume all items from the seque, and
+; the LBQ continues to grow, it means there was an agent action blocking on
+; the .put, which would block indefinitely outside of this test.</p>
+</td><td class="code"><div class="highlight"><pre><span class="p">(</span><span class="nf">deftest</span> <span class="nv">seque-threads</span>
+  <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">queue-size</span> <span class="mi">5</span>
+        <span class="nv">slow-seq</span> <span class="p">(</span><span class="nb">for </span><span class="p">[</span><span class="nv">x</span> <span class="p">(</span><span class="nb">take </span><span class="p">(</span><span class="nb">* </span><span class="mi">2</span> <span class="nv">queue-size</span><span class="p">)</span> <span class="p">(</span><span class="nb">iterate inc </span><span class="mi">0</span><span class="p">))]</span>
+                   <span class="p">(</span><span class="k">do </span><span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">25</span><span class="p">)</span>
+                       <span class="nv">x</span><span class="p">))</span>
+        <span class="nv">small-lbq</span> <span class="p">(</span><span class="nf">java.util.concurrent.LinkedBlockingQueue.</span> <span class="nv">queue-size</span><span class="p">)</span>
+        <span class="nv">worker</span> <span class="p">(</span><span class="nf">seque</span> <span class="nv">small-lbq</span> <span class="nv">slow-seq</span><span class="p">)]</span>
+    <span class="p">(</span><span class="nb">doall </span><span class="nv">worker</span><span class="p">)</span>
+    <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="nv">worker</span> <span class="nv">slow-seq</span><span class="p">))</span>
+    <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">250</span><span class="p">)</span> <span class="c1">;; make sure agents have time to run or get blocked</span>
+    <span class="p">(</span><span class="k">let </span><span class="p">[</span><span class="nv">queue-backlog</span> <span class="p">(</span><span class="nf">.size</span> <span class="nv">small-lbq</span><span class="p">)]</span>
+      <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">&lt;= </span><span class="mi">0</span> <span class="nv">queue-backlog</span> <span class="nv">queue-size</span><span class="p">))</span>
+      <span class="p">(</span><span class="nb">when-not </span><span class="p">(</span><span class="nb">zero? </span><span class="nv">queue-backlog</span><span class="p">)</span>
+        <span class="p">(</span><span class="nf">.take</span> <span class="nv">small-lbq</span><span class="p">)</span>
+        <span class="p">(</span><span class="nf">Thread/sleep</span> <span class="mi">250</span><span class="p">)</span> <span class="c1">;; see if agent was blocking, indicating a thread leak</span>
+        <span class="p">(</span><span class="nf">is</span> <span class="p">(</span><span class="nb">= </span><span class="p">(</span><span class="nf">.size</span> <span class="nv">small-lbq</span><span class="p">)</span>
+               <span class="p">(</span><span class="nb">dec </span><span class="nv">queue-backlog</span><span class="p">)))))))</span></pre></div></td></tr><tr id="section-8"><td class="docs"><div class="pilwrap"><a href="#section-8" class="pilcrow">&#182;</a></div><p>http://clojure.org/agents</p>
+</td><td class="code"><div class="highlight"><pre></pre></div></td></tr><tr id="section-9"><td class="docs"><div class="pilwrap"><a href="#section-9" class="pilcrow">&#182;</a></div><p>agent
+deref, @-reader-macro, agent-errors
+send send-off clear-agent-errors
+await await-for
+set-validator get-validator
+add-watch remove-watch
+shutdown-agents</p>
+</td><td class="code"><div class="highlight"><pre></pre></div></td></tr></tbody></table><div id="generated">generated Sun Feb 17 2013 20:30:03 GMT-0500 (EST)  </div></div></body></html>

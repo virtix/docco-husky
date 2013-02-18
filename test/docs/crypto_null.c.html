@@ -1,0 +1,178 @@
+<!DOCTYPE html><html><head><title>crypto_null.c</title><meta http-equiv="Content-Type" content="text/html" charset="UTF-8"><link rel="stylesheet" media="all" href="./docco.css"></head><body><div id="container"><div id="background"></div><div id="jump_to">Jump To &hellip;<div id="jump_wrapper"><div id="jump_page"><a href="./index.html" class="source"><span class="file_name">README</span></a><a href="././agents.clj.html" class="source "><span class="base_path">. / </span><span class="file_name">agents.clj</span></a><a href="././arma.R.html" class="source "><span class="base_path">. / </span><span class="file_name">arma.R</span></a><a href="././crypto_null.c.html" class="source selected"><span class="base_path">. / </span><span class="file_name">crypto_null.c</span></a><a href="././Foo.java.html" class="source "><span class="base_path">. / </span><span class="file_name">Foo.java</span></a><a href="././gen-ide-json.php.html" class="source "><span class="base_path">. / </span><span class="file_name">gen-ide-json.php</span></a><a href="././hello.bf.html" class="source "><span class="base_path">. / </span><span class="file_name">hello.bf</span></a><a href="././phantomjs.pp.html" class="source "><span class="base_path">. / </span><span class="file_name">phantomjs.pp</span></a><a href="././test.js.html" class="source "><span class="base_path">. / </span><span class="file_name">test.js</span></a><a href="././views.py.html" class="source "><span class="base_path">. / </span><span class="file_name">views.py</span></a></div></div></div><table cellpadding="0" cellspacing="0"><thead><tr><th class="docs"><h1>crypto_null.c</h1><div class="filepath">./</div></th><th class="code"></th></tr></thead><tbody><tr id="section-1"><td class="docs"><div class="pilwrap"><a href="#section-1" class="pilcrow">&#182;</a></div><div class="dox"><div class="summary"><p>Cryptographic API.</p></div><div class="body"><p>Null algorithms, aka Much Ado About Nothing.</p>
+
+<p>These are needed for IPsec, and may be useful in general for<br />testing &amp; debugging.</p>
+
+<p>The null cipher is compliant with RFC2410.</p>
+
+<p>Copyright (c) 2002 James Morris <a href="&#x6D;&#97;&#x69;&#x6C;&#x74;&#x6F;:&#x6A;&#x6D;&#x6F;&#114;&#114;&#x69;s&#64;&#x69;&#110;&#116;&#101;&#x72;&#99;&#x6F;&#x64;&#x65;&#46;&#99;&#111;&#x6D;&#x2E;&#97;&#x75;">&#x6A;&#x6D;&#x6F;&#114;&#114;&#x69;s&#64;&#x69;&#110;&#116;&#101;&#x72;&#99;&#x6F;&#x64;&#x65;&#46;&#99;&#111;&#x6D;&#x2E;&#97;&#x75;</a></p>
+
+<p>This program is free software; you can redistribute it and/or modify<br />it under the terms of the GNU General Public License as published by<br />the Free Software Foundation; either version 2 of the License, or<br />(at your option) any later version.</p></div></div>
+</td><td class="code"><div class="highlight"><pre><span class="cp">#include &lt;crypto/internal/hash.h&gt;</span>
+<span class="cp">#include &lt;crypto/internal/skcipher.h&gt;</span>
+<span class="cp">#include &lt;linux/init.h&gt;</span>
+<span class="cp">#include &lt;linux/module.h&gt;</span>
+<span class="cp">#include &lt;linux/mm.h&gt;</span>
+<span class="cp">#include &lt;linux/string.h&gt;</span>
+
+<span class="cp">#define NULL_KEY_SIZE   0</span>
+<span class="cp">#define NULL_BLOCK_SIZE   1</span>
+<span class="cp">#define NULL_DIGEST_SIZE  0</span>
+<span class="cp">#define NULL_IV_SIZE    0</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_compress</span><span class="p">(</span><span class="k">struct</span> <span class="n">crypto_tfm</span> <span class="o">*</span><span class="n">tfm</span><span class="p">,</span> <span class="k">const</span> <span class="n">u8</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span>
+       <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">slen</span><span class="p">,</span> <span class="n">u8</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="o">*</span><span class="n">dlen</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">slen</span> <span class="o">&gt;</span> <span class="o">*</span><span class="n">dlen</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">EINVAL</span><span class="p">;</span>
+  <span class="n">memcpy</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">slen</span><span class="p">);</span>
+  <span class="o">*</span><span class="n">dlen</span> <span class="o">=</span> <span class="n">slen</span><span class="p">;</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_init</span><span class="p">(</span><span class="k">struct</span> <span class="n">shash_desc</span> <span class="o">*</span><span class="n">desc</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_update</span><span class="p">(</span><span class="k">struct</span> <span class="n">shash_desc</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span> <span class="k">const</span> <span class="n">u8</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+           <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_final</span><span class="p">(</span><span class="k">struct</span> <span class="n">shash_desc</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span> <span class="n">u8</span> <span class="o">*</span><span class="n">out</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_digest</span><span class="p">(</span><span class="k">struct</span> <span class="n">shash_desc</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span> <span class="k">const</span> <span class="n">u8</span> <span class="o">*</span><span class="n">data</span><span class="p">,</span>
+           <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="n">u8</span> <span class="o">*</span><span class="n">out</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_hash_setkey</span><span class="p">(</span><span class="k">struct</span> <span class="n">crypto_shash</span> <span class="o">*</span><span class="n">tfm</span><span class="p">,</span> <span class="k">const</span> <span class="n">u8</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span>
+          <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">keylen</span><span class="p">)</span>
+<span class="p">{</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">null_setkey</span><span class="p">(</span><span class="k">struct</span> <span class="n">crypto_tfm</span> <span class="o">*</span><span class="n">tfm</span><span class="p">,</span> <span class="k">const</span> <span class="n">u8</span> <span class="o">*</span><span class="n">key</span><span class="p">,</span>
+           <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">keylen</span><span class="p">)</span>
+<span class="p">{</span> <span class="k">return</span> <span class="mi">0</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">null_crypt</span><span class="p">(</span><span class="k">struct</span> <span class="n">crypto_tfm</span> <span class="o">*</span><span class="n">tfm</span><span class="p">,</span> <span class="n">u8</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span> <span class="k">const</span> <span class="n">u8</span> <span class="o">*</span><span class="n">src</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">memcpy</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">NULL_BLOCK_SIZE</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="nf">skcipher_null_crypt</span><span class="p">(</span><span class="k">struct</span> <span class="n">blkcipher_desc</span> <span class="o">*</span><span class="n">desc</span><span class="p">,</span>
+             <span class="k">struct</span> <span class="n">scatterlist</span> <span class="o">*</span><span class="n">dst</span><span class="p">,</span>
+             <span class="k">struct</span> <span class="n">scatterlist</span> <span class="o">*</span><span class="n">src</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">nbytes</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">struct</span> <span class="n">blkcipher_walk</span> <span class="n">walk</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+
+  <span class="n">blkcipher_walk_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">walk</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">nbytes</span><span class="p">);</span>
+  <span class="n">err</span> <span class="o">=</span> <span class="n">blkcipher_walk_virt</span><span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">walk</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="n">walk</span><span class="p">.</span><span class="n">nbytes</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">walk</span><span class="p">.</span><span class="n">src</span><span class="p">.</span><span class="n">virt</span><span class="p">.</span><span class="n">addr</span> <span class="o">!=</span> <span class="n">walk</span><span class="p">.</span><span class="n">dst</span><span class="p">.</span><span class="n">virt</span><span class="p">.</span><span class="n">addr</span><span class="p">)</span>
+      <span class="n">memcpy</span><span class="p">(</span><span class="n">walk</span><span class="p">.</span><span class="n">dst</span><span class="p">.</span><span class="n">virt</span><span class="p">.</span><span class="n">addr</span><span class="p">,</span> <span class="n">walk</span><span class="p">.</span><span class="n">src</span><span class="p">.</span><span class="n">virt</span><span class="p">.</span><span class="n">addr</span><span class="p">,</span>
+             <span class="n">walk</span><span class="p">.</span><span class="n">nbytes</span><span class="p">);</span>
+    <span class="n">err</span> <span class="o">=</span> <span class="n">blkcipher_walk_done</span><span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">walk</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">err</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="k">struct</span> <span class="n">shash_alg</span> <span class="n">digest_null</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">digestsize</span>   <span class="o">=</span> <span class="n">NULL_DIGEST_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">setkey</span>       <span class="o">=</span> <span class="n">null_hash_setkey</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">init</span>       <span class="o">=</span> <span class="n">null_init</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">update</span>     <span class="o">=</span> <span class="n">null_update</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">finup</span>      <span class="o">=</span> <span class="n">null_digest</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">digest</span>     <span class="o">=</span> <span class="n">null_digest</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">final</span>      <span class="o">=</span> <span class="n">null_final</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">base</span>     <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">cra_name</span>   <span class="o">=</span> <span class="s">&quot;digest_null&quot;</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">cra_flags</span>    <span class="o">=</span> <span class="n">CRYPTO_ALG_TYPE_SHASH</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">cra_blocksize</span>    <span class="o">=</span> <span class="n">NULL_BLOCK_SIZE</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">cra_module</span>   <span class="o">=</span> <span class="n">THIS_MODULE</span><span class="p">,</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">static</span> <span class="k">struct</span> <span class="n">crypto_alg</span> <span class="n">null_algs</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">cra_name</span>   <span class="o">=</span> <span class="s">&quot;cipher_null&quot;</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_flags</span>    <span class="o">=</span> <span class="n">CRYPTO_ALG_TYPE_CIPHER</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_blocksize</span>    <span class="o">=</span> <span class="n">NULL_BLOCK_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_ctxsize</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_module</span>   <span class="o">=</span> <span class="n">THIS_MODULE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_u</span>      <span class="o">=</span> <span class="p">{</span> <span class="p">.</span><span class="n">cipher</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">cia_min_keysize</span>  <span class="o">=</span> <span class="n">NULL_KEY_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cia_max_keysize</span>  <span class="o">=</span> <span class="n">NULL_KEY_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cia_setkey</span>   <span class="o">=</span>   <span class="n">null_setkey</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cia_encrypt</span>    <span class="o">=</span> <span class="n">null_crypt</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cia_decrypt</span>    <span class="o">=</span> <span class="n">null_crypt</span> <span class="p">}</span> <span class="p">}</span>
+<span class="p">},</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">cra_name</span>   <span class="o">=</span> <span class="s">&quot;ecb(cipher_null)&quot;</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_driver_name</span>  <span class="o">=</span> <span class="s">&quot;ecb-cipher_null&quot;</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_priority</span>   <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_flags</span>    <span class="o">=</span> <span class="n">CRYPTO_ALG_TYPE_BLKCIPHER</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_blocksize</span>    <span class="o">=</span> <span class="n">NULL_BLOCK_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_type</span>   <span class="o">=</span> <span class="o">&amp;</span><span class="n">crypto_blkcipher_type</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_ctxsize</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_module</span>   <span class="o">=</span> <span class="n">THIS_MODULE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_u</span>      <span class="o">=</span> <span class="p">{</span> <span class="p">.</span><span class="n">blkcipher</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">min_keysize</span>    <span class="o">=</span> <span class="n">NULL_KEY_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">max_keysize</span>    <span class="o">=</span> <span class="n">NULL_KEY_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">ivsize</span>     <span class="o">=</span> <span class="n">NULL_IV_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">setkey</span>     <span class="o">=</span>   <span class="n">null_setkey</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">encrypt</span>    <span class="o">=</span> <span class="n">skcipher_null_crypt</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">decrypt</span>    <span class="o">=</span> <span class="n">skcipher_null_crypt</span> <span class="p">}</span> <span class="p">}</span>
+<span class="p">},</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">cra_name</span>   <span class="o">=</span> <span class="s">&quot;compress_null&quot;</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_flags</span>    <span class="o">=</span> <span class="n">CRYPTO_ALG_TYPE_COMPRESS</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_blocksize</span>    <span class="o">=</span> <span class="n">NULL_BLOCK_SIZE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_ctxsize</span>    <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_module</span>   <span class="o">=</span> <span class="n">THIS_MODULE</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">cra_u</span>      <span class="o">=</span> <span class="p">{</span> <span class="p">.</span><span class="n">compress</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="p">.</span><span class="n">coa_compress</span>   <span class="o">=</span> <span class="n">null_compress</span><span class="p">,</span>
+  <span class="p">.</span><span class="n">coa_decompress</span>   <span class="o">=</span> <span class="n">null_compress</span> <span class="p">}</span> <span class="p">}</span>
+<span class="p">}</span> <span class="p">};</span>
+
+<span class="n">MODULE_ALIAS</span><span class="p">(</span><span class="s">&quot;compress_null&quot;</span><span class="p">);</span>
+<span class="n">MODULE_ALIAS</span><span class="p">(</span><span class="s">&quot;digest_null&quot;</span><span class="p">);</span>
+<span class="n">MODULE_ALIAS</span><span class="p">(</span><span class="s">&quot;cipher_null&quot;</span><span class="p">);</span>
+
+<span class="k">static</span> <span class="kt">int</span> <span class="n">__init</span> <span class="nf">crypto_null_mod_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">int</span> <span class="n">ret</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="n">ret</span> <span class="o">=</span> <span class="n">crypto_register_algs</span><span class="p">(</span><span class="n">null_algs</span><span class="p">,</span> <span class="n">ARRAY_SIZE</span><span class="p">(</span><span class="n">null_algs</span><span class="p">));</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">goto</span> <span class="n">out</span><span class="p">;</span>
+
+  <span class="n">ret</span> <span class="o">=</span> <span class="n">crypto_register_shash</span><span class="p">(</span><span class="o">&amp;</span><span class="n">digest_null</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">ret</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">goto</span> <span class="n">out_unregister_algs</span><span class="p">;</span>
+
+  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="nl">out_unregister_algs:</span>
+  <span class="n">crypto_unregister_algs</span><span class="p">(</span><span class="n">null_algs</span><span class="p">,</span> <span class="n">ARRAY_SIZE</span><span class="p">(</span><span class="n">null_algs</span><span class="p">));</span>
+<span class="nl">out:</span>
+  <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="n">__exit</span> <span class="nf">crypto_null_mod_fini</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">crypto_unregister_shash</span><span class="p">(</span><span class="o">&amp;</span><span class="n">digest_null</span><span class="p">);</span>
+  <span class="n">crypto_unregister_algs</span><span class="p">(</span><span class="n">null_algs</span><span class="p">,</span> <span class="n">ARRAY_SIZE</span><span class="p">(</span><span class="n">null_algs</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="n">module_init</span><span class="p">(</span><span class="n">crypto_null_mod_init</span><span class="p">);</span>
+<span class="n">module_exit</span><span class="p">(</span><span class="n">crypto_null_mod_fini</span><span class="p">);</span>
+
+<span class="n">MODULE_LICENSE</span><span class="p">(</span><span class="s">&quot;GPL&quot;</span><span class="p">);</span>
+<span class="n">MODULE_DESCRIPTION</span><span class="p">(</span><span class="s">&quot;Null Cryptographic Algorithms&quot;</span><span class="p">);</span>
+
+</pre></div></td></tr></tbody></table><div id="generated">generated Sun Feb 17 2013 20:30:03 GMT-0500 (EST)  </div></div></body></html>
