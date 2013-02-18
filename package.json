@@ -1,0 +1,54 @@
+{
+  "name": "docco-husky",
+  "description": "Generated static project documentation primarily for node.js projects. A fork of Docco",
+  "keywords": [
+    "documentation",
+    "docs",
+    "generator",
+    "coffeescript"
+  ],
+  "author": "Mike Brevoort <mike@brevoort.com>",
+  "version": "0.3.3",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/mit-license.php"
+    }
+  ],
+  "contributors": [
+    "Mike Brevoort <mike@brevoort.com>",
+    "Jeremy Ashkenas",
+    "bill <bill@if.io>"
+  ],
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "bugs": {
+    "url": "https://github.com/virtix/docco-husky/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/virtix/docco-husky.git"
+  },
+  "dependencies": {
+    "coffee-script": "latest",
+    "dox": "0.1.2",
+    "jade": "0.17.0",
+    "gravatar": "1.0.3",
+    "marked": "0.2.8",
+    "underscore": "1.2.x",
+    "walk": "2.0.2"
+  },
+  "directories": {
+    "lib": "./lib"
+  },
+  "main": "./lib/docco",
+  "bin": {
+    "docco-husky": "./bin/generate"
+  },
+  "scripts": {
+    "install": "scripts/install.sh"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}

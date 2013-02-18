@@ -1,0 +1,45 @@
+<!DOCTYPE html><html><head><title>languages.coffee</title><meta http-equiv="Content-Type" content="text/html" charset="UTF-8"><link rel="stylesheet" media="all" href="../docco.css"></head><body><div id="container"><div id="background"></div><div id="jump_to">Jump To &hellip;<div id="jump_wrapper"><div id="jump_page"><a href="../index.html" class="source"><span class="file_name">README</span></a><a href="../src/docco.coffee.html" class="source "><span class="base_path">src / </span><span class="file_name">docco.coffee</span></a><a href="../src/languages.coffee.html" class="source selected"><span class="base_path">src / </span><span class="file_name">languages.coffee</span></a></div></div></div><table cellpadding="0" cellspacing="0"><thead><tr><th class="docs"><h1>languages.coffee</h1><div class="filepath">src/</div></th><th class="code"></th></tr></thead><tbody><tr id="section-1"><td class="docs"><div class="pilwrap"><a href="#section-1" class="pilcrow">&#182;</a></div><p>Additional languages can be added here and need to be one of the <a href="http://pygments.org/languages/">supported Pygments languages</a>.
+To add a language, edit <code>languages.coffee</code>, run <code>cake build</code>, and reinstall package</p>
+</td><td class="code"><div class="highlight"><pre>  
+
+  <span class="nv">exports.languages = </span><span class="nf">-&gt;</span>
+      <span class="s">&#39;.coffee&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;coffee-script&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+    
+      <span class="s">&#39;.js&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;javascript&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;//&#39;</span><span class="p">,</span> <span class="nv">multi_start: </span><span class="s">&#39;/*&#39;</span><span class="p">,</span> <span class="nv">multi_end: </span><span class="s">&#39;*/&#39;</span>
+      
+      <span class="s">&#39;.rb&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;ruby&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+      </pre></div></td></tr><tr id="section-2"><td class="docs"><div class="pilwrap"><a href="#section-2" class="pilcrow">&#182;</a></div><p>Try """ docstrings ...</p>
+</td><td class="code"><div class="highlight"><pre>      <span class="s">&#39;.py&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;python&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+      
+      <span class="s">&#39;.java&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;java&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;//&#39;</span><span class="p">,</span> <span class="nv">multi_start: </span><span class="s">&#39;/*&#39;</span><span class="p">,</span> <span class="nv">multi_end: </span><span class="s">&#39;*/&#39;</span>
+    </pre></div></td></tr><tr id="section-3"><td class="docs"><div class="pilwrap"><a href="#section-3" class="pilcrow">&#182;</a></div><p>Puppet modules, which are a Ruby DSL</p>
+</td><td class="code"><div class="highlight"><pre>      <span class="s">&#39;.pp&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;ruby&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span><span class="p">,</span> <span class="nv">multi_start: </span><span class="s">&#39;/*&#39;</span><span class="p">,</span> <span class="nv">multi_end: </span><span class="s">&#39;*/&#39;</span>
+    </pre></div></td></tr><tr id="section-4"><td class="docs"><div class="pilwrap"><a href="#section-4" class="pilcrow">&#182;</a></div><p>Puppet manifest and other conf files</p>
+</td><td class="code"><div class="highlight"><pre>      <span class="s">&#39;.conf&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;bash&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+    
+      <span class="s">&#39;.c&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;c&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;//&#39;</span><span class="p">,</span> <span class="nv">multi_start: </span><span class="s">&#39;/*&#39;</span><span class="p">,</span> <span class="nv">multi_end: </span><span class="s">&#39;*/&#39;</span> 
+    
+      <span class="s">&#39;.clj&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;clojure&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;;&#39;</span><span class="p">,</span> <span class="nv">multi_start: </span><span class="s">&#39;(comment&#39;</span><span class="p">,</span> <span class="nv">multi_end: </span><span class="s">&#39;)&#39;</span>
+    
+      <span class="s">&#39;.bf&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;brainfuck&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+
+      <span class="s">&#39;.php&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;php&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;//&#39;</span><span class="p">,</span> <span class="nv">multi_start: </span><span class="s">&#39;/*&#39;</span><span class="p">,</span> <span class="nv">multi_end: </span><span class="s">&#39;*/&#39;</span>
+      
+      <span class="s">&#39;.R&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+
+      <span class="s">&#39;.r&#39;</span><span class="o">:</span>
+        <span class="nv">name: </span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="nv">symbol: </span><span class="s">&#39;#&#39;</span>
+
+</pre></div></td></tr></tbody></table><div id="generated">generated Sun Feb 17 2013 20:30:07 GMT-0500 (EST)  </div></div></body></html>

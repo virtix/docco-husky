@@ -1,0 +1,6 @@
+.DS_Store
+output
+docs
+node_modules
+*.swp
+*.swo
