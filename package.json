@@ -37,7 +37,9 @@
     "gravatar": "1.0.3",
     "marked": "0.2.8",
     "underscore": "1.2.x",
-    "walk": "2.0.2"
+    "walk": "2.0.2",
+    "mocha": "1.8.1",
+    "optimist": "latest"
   },
   "directories": {
     "lib": "./lib"
