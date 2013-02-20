@@ -10,6 +10,9 @@ path = require 'path'
 assert = require 'assert'
 languages = require('./../lib/languages').languages()
 dp = require './../lib/docco-plus'
+{spawn, exec} = require 'child_process'
+util = require('util')
+
 
 
 docco = {}
@@ -20,21 +23,31 @@ utils = {}
 
 suite "Spike", ->
     test 'figure out for N of iterable', ->
+        
         #for ext of languages
         #    console.log ext
-        for key,lang of languages
-            key + ' = ' + lang.name
+        
+        #assert.equal "Something ", "Something Else ...", "These should be the same"
 
 suite 'Utils Tests', ->
    
-    test 'Build a list of files from languages in the current working directory', ->
-        filter = []
+    
 
-        #!console.log Object.keys(languages).join(' -name -o ')
-        lang_filter = for ext of languages 
-            " -name '*#{ext}' "
-        lang_filter = lang_filter.join ' -o '
-        #console.log lang_filter
+    test 'Build a list of files from languages and several directories', ->
+        dirs = '../test ../lib ../tests ../src'
+        files = utils.build_files dirs,languages
+        assert.ok files.length > 10
+       
+    test 'Filter excludes ., hidden, and empty files', ->
+        dirs = '../test ../lib ../tests ../src'
+        files = utils.build_files dirs,languages
+
+        for file in files
+            assert.ok file != '.'
+            assert.ok file != '.'
+              
+
+        
 
 
     test 'Given a non-exitent file extension, this should throw an exception', ->
@@ -78,6 +91,8 @@ suite 'Utils Tests', ->
         retval = utils.ensure_directory  dir, _callback
         assert.equal retval, 'ok'
         
+
+
 
 # -------------------------------------
 suite 'Docco-plus Parser Tests', ->

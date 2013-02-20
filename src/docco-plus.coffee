@@ -13,6 +13,10 @@ gravatar = require 'gravatar'
 _        = require 'underscore'
 walk     = require 'walk'
 {spawn, exec} = require 'child_process'
+# This ffi library allow us to call shell commands synchronously and
+# can also be used to call other lower level C libraries.
+# @see [https://github.com/rbranson/node-ffi](https://github.com/rbranson/node-ffi)
+ffi      = require 'ffi'
 # Import the language definitions. Add or update recognized languages there.
 # See [Pygments](http://pygments.org)
 # To do: Make adding of additional languages possible on the comand-line
@@ -44,6 +48,55 @@ class Parser
 # --------------------------------------------
 class Utils
 
+    
+    build_files: (dirs, languages) ->
+        
+        lang_filter = for ext of languages 
+            " -name '*#{ext}' "
+        lang_filter = lang_filter.join ' -o '
+        cmd = "find #{dirs} #{lang_filter}"
+        
+        files = @sync_exec cmd
+        files.split('\n').filter (file_name, index, array) -> 
+            file_name != '' and path.basename(file_name) != '.'
+        #console.log "DoccoPlus: Recursively generating documentation for # { roots } <- fix roots"
+        
+
+
+
+    # (syncExec)[https://github.com/mgutz/execSync] didn't work, so this is hacked from that
+    sync_exec: (cmd) =>
+        
+        libc = ffi.Library(null, 
+                # FILE* popen(char* cmd, char* mode);
+                popen: ['pointer', ['string', 'string']],
+
+                # void pclose(FILE* fp);
+                pclose: ['void', [ 'pointer']],
+
+                # char* fgets(char* buff, int buff, in)
+                fgets: ['string', ['pointer', 'int','pointer']],
+
+                system: ['int32', ['string']]
+            )
+
+        
+        buffer = new Buffer 1024
+        result = ''
+        fp = libc.popen cmd, 'r'
+
+        if (!fp) 
+            throw new Error 'Error: Could not open command: ' + cmd
+
+        while(libc.fgets(buffer, 1024, fp)) 
+            result += buffer.readCString()
+        
+        libc.pclose(fp)
+
+        return result
+
+
+    
     #
     # Returns the language definition given a file path.
     #

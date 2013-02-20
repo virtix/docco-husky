@@ -1,3 +1,8 @@
+#
+#  Main build utils
+#
+#
+#
 
 {print} = require 'sys'
 {spawn, exec} = require 'child_process'
@@ -54,9 +59,9 @@ task 'install', 'install the `docco-husky` command into /usr/local (or --prefix)
 
 
 
-task 'doc', 'rebuild the Docco documentation', ->
+task 'doc', 'rebuild the DoccoPlus documentation', ->
   exec([
-    'bin/generate src/docco.coffee src/languages.coffee'
+    'bin/main src/docco.coffee src/docco-plus.coffee src/languages.coffee'
     'sed "s/docco.css/resources\\/docco.css/" < docs/docco.html > index.html'
     'rm -r docs'
   ].join(' && '), (err) ->

@@ -1,14 +1,14 @@
 {
-  "name": "docco-husky",
-  "description": "Generated static project documentation primarily for node.js projects. A fork of Docco",
+  "name": "docco-plus",
+  "description": "Generates static annotated code documentation for a variety of languages. A fork of Docco and Docco-Huskyi",
   "keywords": [
     "documentation",
     "docs",
     "generator",
     "coffeescript"
   ],
-  "author": "Mike Brevoort <mike@brevoort.com>",
-  "version": "0.3.3",
+  "author": "bill <bill@if.io>",
+  "version": "0.9.0",
   "licenses": [
     {
       "type": "MIT",
@@ -17,8 +17,7 @@
   ],
   "contributors": [
     "Mike Brevoort <mike@brevoort.com>",
-    "Jeremy Ashkenas",
-    "bill <bill@if.io>"
+    "Jeremy Ashkenas"
   ],
   "engines": {
     "node": ">=0.8.0"
@@ -39,14 +38,15 @@
     "underscore": "1.2.x",
     "walk": "2.0.2",
     "mocha": "1.8.1",
-    "optimist": "latest"
+    "optimist": "latest",
+    "ffi": "latest"
   },
   "directories": {
     "lib": "./lib"
   },
   "main": "./lib/docco",
   "bin": {
-    "docco-husky": "./bin/generate"
+    "docco-plus": "./bin/main"
   },
   "scripts": {
     "install": "scripts/install.sh"

@@ -1,3 +1,16 @@
+### 0.9.0 - Feb 2013
+- Decouple Languages
+- Add Optimist for better arg parsing
+- Refactor into OO style, using TDD
+- Add lots of tests
+- Changed CSS to use Solarized (dark)
+- Changed Jump-to so it uses bootstrap
+- Renamed to DoccoPlus
+
+
+-----
+Mike Brevoort <mike@brevoort.com>
+
 0.3.0 - Dec 18, 2011
 
 * package.json configuration support including a customized CSS stylesheet
